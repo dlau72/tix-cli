@@ -11,10 +11,10 @@ import subprocess
 import platform
 import os
 import sys
+from .utils import get_date
+from datetime import datetime
 from importlib import import_module
 
-
-# Initialize console and storages
 console = Console()
 storage = TaskStorage()
 context_storage = ContextStorage()
@@ -46,15 +46,19 @@ def cli(ctx):
 @click.option('--tag', '-t', multiple=True, help='Add tags to task')
 @click.option('--attach', '-f', multiple=True, help='Attach file(s)')
 @click.option('--link', '-l', multiple=True, help='Attach URL(s)')
+@click.option("--due", "-d", help="Due date of task")
 @click.option('--global', 'is_global', is_flag=True, help='Make task visible in all contexts')
-def add(task, priority, tag, attach, link, is_global):
+def add(task, priority, tag, attach, link, due, is_global):
     """Add a new task"""
     if not task or not task.strip():
         console.print("[red]✗[/red] Task text cannot be empty")
         sys.exit(1)
+    date = get_date(due)
+    if due and not date:
+        console.print("[red]Error processing date")
+        sys.exit(1)
 
-    new_task = storage.add_task(task, priority, list(tag), is_global=is_global)
-    
+    new_task = storage.add_task(task, priority, list(tag), due=date, is_global=is_global)
     # Handle attachments
     if attach:
         attachment_dir = Path.home() / ".tix" / "attachments" / str(new_task.id)
@@ -113,14 +117,21 @@ def ls(all):
     table.add_column("Priority", width=8)
     table.add_column("Task")
     table.add_column("Tags", style="dim")
+    table.add_column("Due Date")
     table.add_column("Scope", style="dim", width=6)
-    
     count = dict()
 
     for task in sorted(tasks, key=lambda t: (t.completed, t.id)):
         status = "✔" if task.completed else "○"
         priority_color = {"high": "red", "medium": "yellow", "low": "green"}[task.priority]
         tags_str = ", ".join(task.tags) if task.tags else ""
+        due_date_str = ""
+        if task.due:
+            due_date = datetime.strptime(task.due, r"%Y-%m-%d")
+            if due_date < datetime.today():
+                due_date_str = f"[red]{task.due}"
+            else:
+                due_date_str = task.due
         scope = "global" if task.is_global else "local"
 
         # Show paperclip if task has attachments or links
@@ -133,6 +144,7 @@ def ls(all):
             f"[{priority_color}]{task.priority}[/{priority_color}]",
             f"[{task_style}]{task.text}[/{task_style}]{attach_icon}" if task.completed else f"{task.text}{attach_icon}",
             tags_str,
+            due_date_str,
             scope
         )
         count[task.completed] = count.get(task.completed, 0) + 1
@@ -311,7 +323,8 @@ def done_all(task_ids):
 @click.option('--remove-tag', multiple=True, help='Remove tags')
 @click.option('--attach', '-f', multiple=True, help='Attach file(s)')
 @click.option('--link', '-l', multiple=True, help='Attach URL(s)')
-def edit(task_id, text, priority, add_tag, remove_tag, attach, link):
+@click.option("--due", "-d", help="Due date of task")
+def edit(task_id, text, priority, add_tag, remove_tag, attach, link, due):
     """Edit a task"""
     task = storage.get_task(task_id)
     if not task:
@@ -340,6 +353,14 @@ def edit(task_id, text, priority, add_tag, remove_tag, attach, link):
             task.tags.remove(tag)
             changes.append(f"-tag: '{tag}'")
 
+    if due:
+        old_date = task.due
+        new_date = get_date(due)
+        if new_date:
+            task.due = new_date
+            changes.append(f"due date: {old_date} → {new_date}")
+        else:
+            console.print("[red]Error updating due date. Try again with proper format")
     # Handle attachments
     if attach:
         attachment_dir = Path.home() / ".tix/attachments" / str(task.id)
@@ -718,6 +739,7 @@ def report(format, output):
         console.print(f"[green]✔[/green] Report saved to {output}")
     else:
         console.print(report_text)
+
 
 
 @cli.command()

@@ -12,6 +12,7 @@ class Task:
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: Optional[str] = None
     tags: List[str] = field(default_factory=list)
+    due: str = None
     attachments: List[str] = field(default_factory=list)
     links: List[str] = field(default_factory=list)
     is_global: bool = False  # New field for global tasks
@@ -26,6 +27,7 @@ class Task:
             'created_at': self.created_at,
             'completed_at': self.completed_at,
             'tags': self.tags,
+            'due':self.due,
             'attachments': self.attachments,
             'links': self.links,
             'is_global': self.is_global
@@ -35,6 +37,8 @@ class Task:
     def from_dict(cls, data: dict):
         """Create task from dictionary (handles old tasks safely)"""
         # Handle legacy tasks without new fields
+        if 'due' not in data:
+            data['due'] = None
         if 'attachments' not in data:
             data['attachments'] = []
         if 'links' not in data:
