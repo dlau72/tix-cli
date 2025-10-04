@@ -65,11 +65,17 @@ class TaskStorage:
         data["tasks"] = [task.to_dict() for task in tasks]
         self._write_data(data)
 
-    def add_task(self, text: str, priority: str = 'medium', tags: List[str] = None) -> Task:
+    def add_task(self, text: str, priority: str = 'medium', tags: List[str] = None, estimate: int = None) -> Task:
         """Add a new task and return it"""
         data = self._read_data()
         new_id = data["next_id"]
-        new_task = Task(id=new_id, text=text, priority=priority, tags=tags or [])
+        new_task = Task(
+            id=new_id, 
+            text=text, 
+            priority=priority, 
+            tags=tags or [],
+            estimate=estimate
+        )
         data["tasks"].append(new_task.to_dict())
         data["next_id"] = new_id + 1
         self._write_data(data)
