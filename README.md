@@ -208,8 +208,6 @@ tix done 1
 # Mark multiple tasks as done
 tix done-all 1 3 5
 
-# Undo completion (reactivate)
-tix undo 1
 ```
 
 #### Removing Tasks
@@ -227,6 +225,16 @@ tix clear --completed
 
 # Clear all active tasks (careful!)
 tix clear --active --force
+```
+
+#### Undo/Redo Operations
+
+```bash
+# Undo the last operation (add, edit, delete, done, etc.)
+tix undo
+
+# Redo the last undone operation
+tix redo
 ```
 
 ### Advanced Features
@@ -301,6 +309,88 @@ tix report -f json -o tasks.json
 # Export as text file
 tix report --output my-tasks.txt
 ```
+
+### 🔒 Backup & Restore
+*All destructive operations (rm, clear) automatically create a backup before execution*
+
+#### Creating Backups
+
+```bash
+# Create a timestamped backup
+tix backup create
+
+# Create a backup with a custom filename
+tix backup create my-backup.json
+```
+
+#### Listing Backups
+
+```bash
+# List all available backups
+tix backup list
+```
+
+#### Restoring From Backup
+
+```bash
+# Restore using top-level command (prompts for confirmation)
+tix restore <file_name>
+
+# Skip confirmation
+tix restore <file_name> -y
+
+# Equivalent grouped command
+tix backup restore <file_name>
+```
+
+
+# 📖 Filters
+
+#### Saved Filters (Saved Searches)
+
+You can save commonly used filters so you don’t have to re-type them every time.
+
+```bash
+# Save a filter named "work" for high-priority tasks tagged "work"
+tix filter save work -t work -p high
+
+# Save filter for completed tasks
+tix filter save done-only --completed
+
+# Overwrite an existing filter (with --force)
+tix filter save work -t work -p medium --force
+````
+
+#### Listing Saved Filters
+
+```bash
+# Show all saved filters
+tix filter list
+```
+
+Example output:
+
+```
+Saved Filters:
+  • work → priority=high AND tag='work'
+  • done-only → completed
+```
+
+#### Applying Saved Filters
+
+```bash
+# Apply a saved filter
+tix filter apply --saved work
+
+# Apply directly without saving
+tix filter apply -p high -t urgent
+
+# Saved filter takes precedence over inline flags
+tix filter apply --saved work -p low   # will still use the saved 'work' filter
+```
+
+⚡ Saved filters are stored in `~/.tix/filters.json`.
+You can edit/remove the file manually, but it’s recommended to use the CLI commands.
 
 ## 🎨 Using Tab Completion
 
