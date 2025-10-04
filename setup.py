@@ -39,7 +39,8 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "rich>=13.0.0",
-        "textual>=6.2.0",
+        "pyyaml>=6.0",
+        "textual>=0.50.0",
     ],
     extras_require={
         "dev": [

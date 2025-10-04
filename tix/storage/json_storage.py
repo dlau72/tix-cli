@@ -79,45 +79,21 @@ class TaskStorage:
         self.storage_path.write_text(json.dumps(data, indent=2))
 
     def load_tasks(self) -> List[Task]:
-        """Load all tasks from storage, including global tasks from other contexts"""
+        """Load all tasks from storage"""
         data = self._read_data()
-        tasks = [Task.from_dict(item) for item in data["tasks"]]
-        
-        # If not in default context, also load global tasks from default
-        if self.context != "default":
-            try:
-                default_storage = TaskStorage(context="default")
-                default_tasks = [Task.from_dict(item) for item in default_storage._read_data()["tasks"]]
-                global_tasks = [t for t in default_tasks if t.is_global]
-                tasks.extend(global_tasks)
-            except:
-                pass  # If default context doesn't exist, skip
-        
-        return tasks
+        return [Task.from_dict(item) for item in data["tasks"]]
 
     def save_tasks(self, tasks: List[Task]):
-        """Save all tasks to storage (only non-global or current context tasks)"""
+        """Save all tasks to storage"""
         data = self._read_data()
-        
-        # Filter out global tasks if we're not in the default context
-        if self.context != "default":
-            tasks = [t for t in tasks if not t.is_global]
-        
         data["tasks"] = [task.to_dict() for task in tasks]
         self._write_data(data)
 
-    def add_task(self, text: str, priority: str = 'medium', tags: List[str] = None, is_global: bool = False, due:str=None, record_history: bool = True) -> Task:
+    def add_task(self, text: str, priority: str = 'medium', tags: List[str] = None, due:str=None, is_global: bool = False, record_history: bool = True) -> Task:
         """Add a new task and return it"""
         data = self._read_data()
         new_id = data["next_id"]
-        new_task = Task(id=new_id, text=text, priority=priority, tags=tags or [],due=due, is_global=is_global)
-        
-        # Global tasks can only be added in the default context
-        if is_global and self.context != "default":
-            # Add to default context instead
-            default_storage = TaskStorage(context="default")
-            return default_storage.add_task(text, priority, tags, is_global=True)
-        
+        new_task = Task(id=new_id, text=text, priority=priority, tags=tags or [])
         data["tasks"].append(new_task.to_dict())
         data["next_id"] = new_id + 1
         self._write_data(data)
