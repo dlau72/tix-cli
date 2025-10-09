@@ -122,7 +122,6 @@ class TaskStorage:
                 tasks[i] = task
                 self.save_tasks(tasks)
 
-                print(f"[DEBUG] update_task called for id={task.id}, record_history={record_history}")
                 if record_history:
                     self.history.record({
                         "op": "update",
