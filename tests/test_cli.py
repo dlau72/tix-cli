@@ -1,4 +1,4 @@
-from platform 
+import platform 
 import pytest
 from click.testing import CliRunner
 from tix.cli import cli
